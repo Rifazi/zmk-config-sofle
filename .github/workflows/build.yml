@@ -31,8 +31,8 @@ jobs:
       fail-fast: false
       matrix: ${{fromJson(needs.matrix.outputs.matrix)}}
     steps:
-      - name: Install distutils in the container
-        run: apt-get update && apt-get install -y python3-distutils  # Install distutils here
+      - name: Install distutils via pip
+        run: python3 -m pip install setuptools  # setuptools includes distutils
       - name: Prepare variables
         id: variables
         run: |
