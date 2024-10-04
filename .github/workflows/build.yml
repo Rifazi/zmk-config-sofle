@@ -31,14 +31,10 @@ jobs:
       fail-fast: false
       matrix: ${{fromJson(needs.matrix.outputs.matrix)}}
     steps:
-      - name: Install pip
+      - name: Install necessary packages
         run: |
           apt-get update
-          apt-get install -y python3-pip  # Install pip
-      - name: Install setuptools (includes distutils)
-        run: |
-          python3 -m pip install --upgrade pip  # Upgrade pip to the latest version
-          python3 -m pip install setuptools  # Install setuptools which includes distutils
+          apt-get install -y python3-pip python3-setuptools python3-distutils
       - name: Prepare variables
         id: variables
         run: |
