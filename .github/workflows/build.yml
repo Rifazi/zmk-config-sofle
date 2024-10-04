@@ -31,8 +31,14 @@ jobs:
       fail-fast: false
       matrix: ${{fromJson(needs.matrix.outputs.matrix)}}
     steps:
-      - name: Install distutils via pip
-        run: python3 -m pip install setuptools  # setuptools includes distutils
+      - name: Install pip
+        run: |
+          apt-get update
+          apt-get install -y python3-pip  # Install pip
+      - name: Install setuptools (includes distutils)
+        run: |
+          python3 -m pip install --upgrade pip  # Upgrade pip to the latest version
+          python3 -m pip install setuptools  # Install setuptools which includes distutils
       - name: Prepare variables
         id: variables
         run: |
