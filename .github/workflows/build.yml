@@ -34,7 +34,10 @@ jobs:
       - name: Install necessary packages
         run: |
           apt-get update
-          apt-get install -y python3-pip python3-setuptools python3-distutils
+          apt-get install -y software-properties-common
+          add-apt-repository universe
+          apt-get update
+          apt-get install -y python3-pip python3-setuptools
       - name: Prepare variables
         id: variables
         run: |
