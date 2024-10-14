@@ -47,9 +47,7 @@
                          &lt 1 PRINTSCREEN  &kp LEFT_ALT  &kp LCTRL  &kp RIGHT_COMMAND  &kp RET       &kp SPACE         &kp BACKSPACE  &kp LEFT_PARENTHESIS  &kp RIGHT_PARENTHESIS  &kp LEFT_BRACE
             >;
 
-            sensor-bindings =
-                <&inc_dec_kp C_VOLUME_UP C_VOLUME_DOWN>,
-                <&inc_dec_kp LC(TAB) LC(LS(TAB))>;
+            sensor-bindings = <&inc_dec_kp K_VOLUME_UP C_VOLUME_DOWN>;
         };
 
         lower_layer {
