@@ -47,10 +47,7 @@
                          &lt 1 PRINTSCREEN  &kp LEFT_ALT  &kp LCTRL  &kp RIGHT_COMMAND  &kp RET       &kp SPACE         &kp BACKSPACE  &kp LEFT_PARENTHESIS  &kp RIGHT_PARENTHESIS  &kp LEFT_BRACE
             >;
 
-            sensor-bindings =
-                <&inc_dec_kp LC(TAB) LC(LS(C_VOL_DN))>,
-                <&inc_dec_kp C_VOL_DN C_VOL_UP>,
-                <&inc_dec_kp LC(TAB) LS(LC(TAB))>;
+            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN &inc_dec_kp PG_UP PG_DN>;
         };
 
         lower_layer {
