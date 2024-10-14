@@ -25,4 +25,5 @@ include:
   - board: nice_nano_v2
     shield: settings_reset
   - board: nice_nano_v2
-    shield: zmk-usb-logging
+    shield: sofle_left
+    snippet: zmk-usb-logging
