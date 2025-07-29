@@ -15,7 +15,7 @@ jobs:
       - name: Install yaml2json
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip python3.10-venv
+          sudo apt-get install -y python3-pip python3.12-venv
           pip3 install remarshal
 
       - id: set-matrix
