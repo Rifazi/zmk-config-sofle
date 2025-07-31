@@ -52,24 +52,24 @@ jobs:
             ARTIFACT_NAME="${{ matrix.shield }}-${{ matrix.board }}-zmk"
             DISPLAY_NAME="${{ matrix.shield }} - ${{ matrix.board }}"
           else
-            EXTRA_CMAKE_ARGS=
-            DISPLAY_NAME="${{ matrix.board }}"
+            EXTRA_CMAKE_ARGS=""
             ARTIFACT_NAME="${{ matrix.board }}-zmk"
+            DISPLAY_NAME="${{ matrix.board }}"
           fi
           UNIQUE_SUFFIX=$(date +%s%N)
-          echo "::set-output name=extra-cmake-args::${EXTRA_CMAKE_ARGS}"
-          echo "::set-output name=artifact-name::${ARTIFACT_NAME}-${UNIQUE_SUFFIX}"
-          echo "::set-output name=display-name::${DISPLAY_NAME}"
+          echo "extra_cmake_args=${EXTRA_CMAKE_ARGS}" >> $GITHUB_OUTPUT
+          echo "artifact_name=${ARTIFACT_NAME}-${UNIQUE_SUFFIX}" >> $GITHUB_OUTPUT
+          echo "display_name=${DISPLAY_NAME}" >> $GITHUB_OUTPUT
 
-      - name: Build (${{ steps.variables.outputs.display-name }})
+      - name: Build (${{ steps.variables.outputs.display_name }})
         run: |
-          west build -s app -b ${{ matrix.board }} -- -DZMK_CONFIG=$(realpath config) ${{ steps.variables.outputs.extra-cmake-args }}
+          west build -s app -b ${{ matrix.board }} -- -DZMK_CONFIG=$(realpath config) ${{ steps.variables.outputs.extra_cmake_args }}
           mkdir -p build/artifacts
-          cp build/zephyr/zmk.uf2 build/artifacts/${{ steps.variables.outputs.artifact-name }}.uf2
-          cp build/zephyr/zmk.hex build/artifacts/${{ steps.variables.outputs.artifact-name }}.hex
+          cp build/zephyr/zmk.uf2 build/artifacts/${{ steps.variables.outputs.artifact_name }}.uf2
+          cp build/zephyr/zmk.hex build/artifacts/${{ steps.variables.outputs.artifact_name }}.hex
 
-      - name: Archive (${{ steps.variables.outputs.display-name }})
+      - name: Archive (${{ steps.variables.outputs.display_name }})
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.variables.outputs.artifact-name }}
+          name: ${{ steps.variables.outputs.artifact_name }}
           path: build/artifacts
