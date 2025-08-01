@@ -49,6 +49,9 @@ jobs:
             DISPLAY_NAME="${{ matrix.board }}"
             ARTIFACT_NAME="${{ matrix.board }}-zmk"
           fi
+          if [ -n "${{ matrix.cmake-args }}" ]; then
+            ARTIFACT_NAME="${ARTIFACT_NAME}-$(echo '${{ matrix.cmake-args }}' | tr ' ' '-' | tr '=' '-')"
+          fi
           echo "extra-cmake-args=${EXTRA_CMAKE_ARGS}" >> $GITHUB_OUTPUT
           echo "artifact-name=${ARTIFACT_NAME}" >> $GITHUB_OUTPUT
           echo "display-name=${DISPLAY_NAME}" >> $GITHUB_OUTPUT
