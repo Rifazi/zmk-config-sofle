@@ -52,6 +52,7 @@ jobs:
           if [ -n "${{ matrix.cmake-args }}" ]; then
             ARTIFACT_NAME="${ARTIFACT_NAME}-$(echo '${{ matrix.cmake-args }}' | tr ' ' '-' | tr '=' '-')"
           fi
+          ARTIFACT_NAME="${ARTIFACT_NAME}-${{ github.run_number }}-${{ strategy.job-index }}"
           echo "extra-cmake-args=${EXTRA_CMAKE_ARGS}" >> $GITHUB_OUTPUT
           echo "artifact-name=${ARTIFACT_NAME}" >> $GITHUB_OUTPUT
           echo "display-name=${DISPLAY_NAME}" >> $GITHUB_OUTPUT
