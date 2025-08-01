@@ -1,49 +1,43 @@
-name: Build firmware
+on: [push, pull_request, workflow_dispatch]
 
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
+name: Build
 
 jobs:
-  build:
-    name: Build (${{ matrix.shield || 'default' }} - ${{ matrix.board }})
+  matrix:
     runs-on: ubuntu-latest
-
+    name: Fetch Build Keyboards
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install yaml2json
+        run: python3 -m pip install remarshal
+      - name: Install distutils
+        run: sudo apt-get install python3-distutils
+      - id: set-matrix
+        name: Fetch Build Matrix
+        run: |
+          matrix=$(yaml2json build.yaml | jq -c .)
+          yaml2json build.yaml
+          echo "::set-output name=matrix::${matrix}"
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: zmkfirmware/zmk-build-arm:stable
+    needs: matrix
+    name: Build
     strategy:
       fail-fast: false
-      matrix:
-        board:
-          - nice_nano
-        shield:
-          - left
-          - right
-
+      matrix: ${{fromJson(needs.matrix.outputs.matrix)}}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Cache west modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/zephyr
-            ~/.west
-            modules
-            zephyr
-            tools
-          key: ${{ runner.os }}-west-${{ hashFiles('west.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-west-
-
-      - name: Install west and dependencies
+      - name: Install necessary packages
         run: |
-          pip install west
-          west init -l .
-          west update
-          west zephyr-export
-          pip install -r zephyr/scripts/requirements.txt
-
+          apt-get update
+          apt-get install -y software-properties-common
+          add-apt-repository universe
+          apt-get update
+          apt-get install -y python3-pip python3-setuptools
       - name: Prepare variables
         id: variables
         run: |
@@ -56,20 +50,55 @@ jobs:
             DISPLAY_NAME="${{ matrix.board }}"
             ARTIFACT_NAME="${{ matrix.board }}-zmk"
           fi
-          UNIQUE_SUFFIX=$(date +%s%N)
-          echo "extra-cmake-args=${EXTRA_CMAKE_ARGS}" >> $GITHUB_OUTPUT
-          echo "artifact-name=${ARTIFACT_NAME}-${UNIQUE_SUFFIX}" >> $GITHUB_OUTPUT
-          echo "display-name=${DISPLAY_NAME}" >> $GITHUB_OUTPUT
-
-      - name: Build (${{ steps.variables.outputs.display-name }})
-        run: |
-          west build -s app -b ${{ matrix.board }} -- -DZMK_CONFIG=$(realpath config) ${{ steps.variables.outputs.extra-cmake-args }}
-          mkdir -p build/artifacts
-          cp build/zephyr/zmk.uf2 build/artifacts/${{ steps.variables.outputs.artifact-name }}.uf2
-          cp build/zephyr/zmk.hex build/artifacts/${{ steps.variables.outputs.artifact-name }}.hex
-
-      - name: Archive (${{ steps.variables.outputs.display-name }})
-        uses: actions/upload-artifact@v4
+          echo ::set-output name=extra-cmake-args::${EXTRA_CMAKE_ARGS}
+          echo ::set-output name=artifact-name::${ARTIFACT_NAME}
+          echo ::set-output name=display-name::${DISPLAY_NAME}
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Cache west modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-zephyr-modules
         with:
-          name: ${{ steps.variables.outputs.artifact-name }}
+          path: |
+            modules/
+            tools/
+            zephyr/
+            bootloader/
+            zmk/
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('manifest-dir/west.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: West Init
+        run: west init -l config
+      - name: West Update
+        run: west update
+      - name: West Zephyr export
+        run: west zephyr-export
+      - name: West Build (${{ steps.variables.outputs.display-name }})
+        run: |
+          west build -s zmk/app -b ${{ matrix.board }} -- -DZMK_CONFIG=${GITHUB_WORKSPACE}/config ${{ steps.variables.outputs.extra-cmake-args }} ${{ matrix.cmake-args }}
+      - name: ${{ steps.variables.outputs.display-name }} DTS File
+        if: ${{ always() }}
+        run: |
+          if [ -f "build/zephyr/${{ matrix.board }}.dts.pre.tmp" ]; then cat -n build/zephyr/${{ matrix.board }}.dts.pre.tmp; fi
+          if [ -f "build/zephyr/zephyr.dts" ]; then cat -n build/zephyr/zephyr.dts; fi
+      - name: ${{ steps.variables.outputs.display-name }} Kconfig file
+        run: cat build/zephyr/.config | grep -v "^#" | grep -v "^$"
+      - name: Rename artifacts
+        run: |
+          mkdir build/artifacts
+          if [ -f build/zephyr/zmk.uf2 ]
+          then
+            cp build/zephyr/zmk.uf2 "build/artifacts/${{ steps.variables.outputs.artifact-name }}.uf2"
+          elif [ -f build/zephyr/zmk.hex ]
+          then
+            cp build/zephyr/zmk.hex "build/artifacts/${{ steps.variables.outputs.artifact-name }}.hex"
+          fi
+      - name: Archive (${{ steps.variables.outputs.display-name }})
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware
           path: build/artifacts
